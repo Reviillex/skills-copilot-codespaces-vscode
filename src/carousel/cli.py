@@ -1,0 +1,395 @@
+"""Command line: discover -> draft (+check +review) -> edit JSON by hand -> check -> render.\n\nfreeform renders hand-written carousels (no paper) with the same themes."""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+import os
+import re
+import sys
+import urllib.error
+from importlib import resources
+from pathlib import Path
+
+from .checks import check_carousel, check_freeform, has_errors
+from .config import Config, load_config
+from .pubmed import DESIGN_RANK, Paper, fetch_paper, fetch_papers, search
+from .schema import Carousel, FreeformCarousel, Review
+
+
+def _load(folder: Path) -> tuple[Paper, Carousel]:
+    paper = Paper.load(folder / "paper.json")
+    carousel = Carousel.model_validate_json((folder / "carousel.json").read_text(encoding="utf-8"))
+    return paper, carousel
+
+
+def _run_checks(folder: Path, cfg: Config) -> bool:
+    """Print and save deterministic check results; return True if there are no errors."""
+    paper, carousel = _load(folder)
+    issues = check_carousel(carousel, paper, cfg.writing)
+    lines = [str(i) for i in issues] or ["No issues."]
+    (folder / "check.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("\n".join(lines))
+    return not has_errors(issues)
+
+
+def _warn_if_no_credentials() -> None:
+    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
+        print("Note: ANTHROPIC_API_KEY is not set; the call only works if you are logged in with `ant auth login`.")
+
+
+def _append_usage(folder: Path, step: str, record: dict) -> None:
+    path = folder / "usage.json"
+    log = json.loads(path.read_text()) if path.exists() else []
+    log.append({"step": step, "at": dt.datetime.now().isoformat(timespec="seconds"), **record})
+    path.write_text(json.dumps(log, indent=2), encoding="utf-8")
+
+
+def _review_markdown(review: Review, carousel: Carousel) -> str:
+    out = [f"# Review: {review.overall}", "", review.summary, ""]
+    for r in review.slides:
+        if r.verdict == "supported":
+            continue
+        headline = carousel.slides[r.slide - 1].headline if 0 < r.slide <= len(carousel.slides) else "?"
+        out += [f"## Slide {r.slide}: {r.verdict}", f"- Current: {headline}", f"- Problem: {r.problem}",
+                f"- Suggested: {r.suggested_fix}", ""]
+    if review.caption_problems:
+        out += ["## Caption"] + [f"- {p}" for p in review.caption_problems] + [""]
+    if review.omitted_points:
+        out += ["## Omitted from the carousel"] + [f"- {p}" for p in review.omitted_points] + [""]
+    return "\n".join(out)
+
+
+# --------------------------------------------------------------------------- commands
+
+
+def cmd_discover(args: argparse.Namespace, cfg: Config) -> int:
+    if args.days:
+        cfg.pubmed.days = args.days
+    if getattr(args, "query", ""):
+        cfg.pubmed.query = args.query
+    try:
+        pmids = search(cfg.pubmed)
+        papers = sorted(fetch_papers(pmids, cfg.pubmed), key=lambda p: DESIGN_RANK.get(p.design, 99))
+    except urllib.error.URLError as e:
+        print(f"PubMed request failed: {e.reason}")
+        return 1
+    if not papers:
+        print(f"No candidates in the last {cfg.pubmed.days} days. Try --days 14 or widen topics in carousel.toml.")
+        return 0
+    cfg.output_dir.mkdir(parents=True, exist_ok=True)
+    out = cfg.output_dir / f"candidates-{dt.date.today():%Y%m%d}.json"
+    out.write_text(
+        json.dumps([{"pmid": p.pmid, "design": p.design, "journal": p.journal, "title": p.title,
+                     "open_access": bool(p.pmcid)} for p in papers], ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    print(f"{'PMID':<10} {'design':<18} {'OA':<3} {'journal':<24} title")
+    for p in papers:
+        print(f"{p.pmid:<10} {p.design:<18} {'yes' if p.pmcid else '-':<3} {p.journal[:24]:<24} {p.title[:90]}")
+    print(f"\nSaved to {out}. Next: carousel draft <PMID>")
+    return 0
+
+
+def cmd_draft(args: argparse.Namespace, cfg: Config) -> int:
+    import anthropic
+
+    from .llm import DraftError, draft_carousel, review_carousel, usage_line
+
+    folder = args.out or cfg.output_dir / f"{dt.date.today():%Y-%m-%d}-pmid{args.pmid}"
+    if (folder / "carousel.json").exists() and not args.overwrite:
+        print(f"{folder}/carousel.json exists (maybe with your edits). Use --overwrite to redraft.")
+        return 1
+    _warn_if_no_credentials()
+    try:
+        paper = fetch_paper(args.pmid, cfg.pubmed, with_full_text=not args.abstract_only)
+    except (urllib.error.URLError, LookupError) as e:
+        print(f"Could not fetch PMID {args.pmid}: {getattr(e, 'reason', e)}")
+        return 1
+    folder.mkdir(parents=True, exist_ok=True)
+    paper.save(folder / "paper.json")
+    scope = "full text" if paper.full_text else "abstract only"
+    print(f"Paper: {paper.short_citation} | {paper.design} | {scope}")
+    if paper.license:
+        print(f"License: {paper.license[:160]}")
+
+    client = anthropic.Anthropic()
+    try:
+        carousel, usage = draft_carousel(client, cfg, paper)
+        (folder / "carousel.json").write_text(carousel.model_dump_json(indent=2), encoding="utf-8")
+        _append_usage(folder, "draft", usage)
+        print(f"Draft saved. {usage_line(usage)}\n")
+
+        print("Deterministic checks:")
+        _run_checks(folder, cfg)
+
+        if not args.no_review:
+            review, usage = review_carousel(client, cfg, paper, carousel)
+            (folder / "review.json").write_text(review.model_dump_json(indent=2), encoding="utf-8")
+            (folder / "review.md").write_text(_review_markdown(review, carousel), encoding="utf-8")
+            _append_usage(folder, "review", usage)
+            print(f"\nReview: {review.overall}. {review.summary}\n({usage_line(usage)})")
+    except DraftError as e:
+        print(f"Stopped: {e}")
+        return 1
+    except anthropic.AuthenticationError:
+        print("Anthropic API key missing or invalid. Set ANTHROPIC_API_KEY.")
+        return 1
+
+    print(f"\nNext: edit {folder}/carousel.json, then `carousel check {folder}` and `carousel render {folder}`.")
+    return 0
+
+
+def cmd_check(args: argparse.Namespace, cfg: Config) -> int:
+    return 0 if _run_checks(args.folder, cfg) else 1
+
+
+def cmd_review(args: argparse.Namespace, cfg: Config) -> int:
+    import anthropic
+
+    from .llm import review_carousel, usage_line
+
+    _warn_if_no_credentials()
+    paper, carousel = _load(args.folder)
+    review, usage = review_carousel(anthropic.Anthropic(), cfg, paper, carousel)
+    (args.folder / "review.json").write_text(review.model_dump_json(indent=2), encoding="utf-8")
+    (args.folder / "review.md").write_text(_review_markdown(review, carousel), encoding="utf-8")
+    _append_usage(args.folder, "review", usage)
+    print(f"Review: {review.overall}. {review.summary}\nDetails: {args.folder / 'review.md'} ({usage_line(usage)})")
+    return 0
+
+
+def cmd_render(args: argparse.Namespace, cfg: Config) -> int:
+    from .render import render
+
+    if not _run_checks(args.folder, cfg) and not args.force:
+        print("\nRendering blocked by errors above. Fix carousel.json or pass --force.")
+        return 1
+    paper, carousel = _load(args.folder)
+    paths = render(carousel, paper, cfg, args.folder / "slides", theme=args.theme)
+    print(f"\n{len(paths)} slides + caption.txt in {args.folder / 'slides'}")
+    return 0
+
+
+def cmd_freeform(args: argparse.Namespace, cfg: Config) -> int:
+    """Render a hand-written carousel (opinion or hobby series): style checks only, never blocking."""
+    from .render import render_freeform
+
+    spec = FreeformCarousel.model_validate_json(args.spec.read_text(encoding="utf-8"))
+    issues = check_freeform(spec, cfg.writing)
+    print("\n".join(str(i) for i in issues) or "No issues.")
+    out = args.out or cfg.output_dir / args.spec.parent.name
+    paths = render_freeform(spec, args.spec.parent, cfg, out, theme=args.theme)
+    print(f"\n{len(paths)} slides rendered to {out}")
+    return 0
+
+
+def cmd_sample(args: argparse.Namespace, cfg: Config) -> int:
+    """Render the bundled fictional example: no API key or network needed (except web font)."""
+    from .render import render
+
+    sample = resources.files("carousel").joinpath("sample")
+    paper = Paper(**json.loads(sample.joinpath("paper.json").read_text(encoding="utf-8")))
+    carousel = Carousel.model_validate_json(sample.joinpath("carousel.json").read_text(encoding="utf-8"))
+    out = cfg.output_dir / "sample"
+    paths = render(carousel, paper, cfg, out, sample=True, theme=args.theme)
+    print(f"{len(paths)} slides rendered to {out}")
+    return 0
+
+
+# --------------------------------------------------------------------------- YouTube + Gemini
+
+
+def _slug(text: str) -> str:
+    return "-".join(re.findall(r"[a-z0-9]+", text.lower()))[:40] or "query"
+
+
+def cmd_yt_scan(args: argparse.Namespace, cfg: Config) -> int:
+    """YouTube numbers + comments, Gemini video briefs, Claude demand report."""
+    import anthropic
+
+    from . import gemini, youtube as yt
+    from .insights import analyze_demand, check_report, report_markdown
+    from .llm import DraftError, usage_line
+
+    y = cfg.youtube
+    y.days = args.days or y.days
+    y.max_videos = args.videos or y.max_videos
+    summaries = y.summaries if args.summaries is None else args.summaries
+    now = dt.datetime.now(dt.timezone.utc)
+    folder = args.out or cfg.output_dir / "yt" / f"{now:%Y-%m-%d}-{_slug(args.query)}"
+
+    try:
+        videos = yt.rank_by_momentum(yt.video_details(yt.search_video_ids(args.query, y, now)), now)
+        comments = [c for v in videos for c in yt.top_comments(v.id, y.comments_per_video)]
+    except (yt.YouTubeError, urllib.error.URLError) as e:
+        print(f"YouTube request failed: {getattr(e, 'reason', e)}")
+        return 1
+    if not videos:
+        print(f"No videos for '{args.query}' in the last {y.days} days.")
+        return 0
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "videos.json").write_text(yt.to_json(videos), encoding="utf-8")
+    (folder / "comments.json").write_text(yt.to_json(comments), encoding="utf-8")
+    print(f"{len(videos)} videos, {len(comments)} comments (author names dropped).")
+
+    briefs: dict[str, dict] = {}
+    if summaries > 0:
+        try:
+            gclient = gemini.client()
+            for v in videos[:summaries]:
+                try:
+                    briefs[v.id] = gemini.summarize_video(gclient, cfg.gemini.video_model, v.url).model_dump()
+                    print(f"Gemini watched: {v.title[:70]}")
+                except Exception as e:  # one failed video (private, too long, quota) must not stop the scan
+                    print(f"Gemini skipped {v.id}: {e}")
+        except gemini.GeminiError as e:
+            print(f"Gemini unavailable, continuing without video briefs: {e}")
+        (folder / "briefs.json").write_text(json.dumps(briefs, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    _warn_if_no_credentials()
+    try:
+        report, usage = analyze_demand(anthropic.Anthropic(), cfg, args.query, videos, comments, briefs, now)
+    except DraftError as e:
+        print(f"Stopped: {e}")
+        return 1
+    issues = check_report(report, comments, {v.id for v in videos})
+    (folder / "report.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    (folder / "report.md").write_text(report_markdown(args.query, report, issues, videos, now), encoding="utf-8")
+    _append_usage(folder, "demand", usage)
+
+    print(f"\n{report.summary}\n")
+    for i in issues:
+        print(i)
+    for n, idea in enumerate(report.ideas, start=1):
+        print(f"{n}. [{idea.track}] {idea.title}")
+    print(f"\nReport: {folder / 'report.md'} ({usage_line(usage)})\nNext: carousel yt-idea {folder} <number>")
+    return 0
+
+
+def cmd_yt_idea(args: argparse.Namespace, cfg: Config) -> int:
+    """Health idea -> PubMed discover with its query. Freeform idea -> Claude draft -> noir render."""
+    from .schema import DemandReport
+
+    report = DemandReport.model_validate_json((args.folder / "report.json").read_text(encoding="utf-8"))
+    if not 1 <= args.number <= len(report.ideas):
+        print(f"Idea number must be 1 to {len(report.ideas)}.")
+        return 1
+    idea = report.ideas[args.number - 1]
+
+    if idea.track == "health":
+        print(f"Health idea: {idea.title}\nSearching PubMed (last {args.days} days): {idea.pubmed_query}\n")
+        return cmd_discover(argparse.Namespace(days=args.days, query=idea.pubmed_query), cfg)
+
+    import anthropic
+
+    from .insights import draft_freeform
+    from .llm import DraftError, usage_line
+    from .render import render_freeform
+
+    _warn_if_no_credentials()
+    try:
+        draft, usage = draft_freeform(anthropic.Anthropic(), cfg, idea, report)
+    except DraftError as e:
+        print(f"Stopped: {e}")
+        return 1
+    folder = args.folder / f"idea-{args.number}"
+    folder.mkdir(parents=True, exist_ok=True)
+    spec = draft.to_carousel(theme=args.theme)
+    (folder / "carousel.json").write_text(spec.model_dump_json(indent=2), encoding="utf-8")
+    _append_usage(folder, "freeform-draft", usage)
+    print(f"Draft: {folder / 'carousel.json'} ({usage_line(usage)})")
+    print("\n".join(str(i) for i in check_freeform(spec, cfg.writing)) or "No issues.")
+    if not args.no_render:
+        paths = render_freeform(spec, folder, cfg, folder / "slides")
+        print(f"{len(paths)} slides in {folder / 'slides'}")
+    print(f"Edit carousel.json, then: carousel freeform {folder / 'carousel.json'}")
+    return 0
+
+
+def cmd_imagine(args: argparse.Namespace, cfg: Config) -> int:
+    """Gemini image for a freeform slide figure. Not for clinical or anatomical visuals."""
+    from . import gemini
+
+    try:
+        path = gemini.generate_image(gemini.client(), cfg.gemini.image_model, args.prompt, args.out, args.aspect)
+    except gemini.GeminiError as e:
+        print(f"Stopped: {e}")
+        return 1
+    print(f"Saved {path} (+ {path.with_suffix('.txt').name} with prompt and AI label reminder).")
+    print(f'Use it in a freeform slide: "figure": "{path.name}"')
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="carousel", description=__doc__)
+    parser.add_argument("--config", type=Path, default=None, help="path to carousel.toml")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("discover", help="list recent candidate papers from PubMed")
+    p.add_argument("--days", type=int, default=0)
+    p.add_argument("--query", default="", help="custom PubMed terms; replaces topics and journals")
+    p.set_defaults(func=cmd_discover)
+
+    p = sub.add_parser("draft", help="fetch a paper and draft, check and review a carousel")
+    p.add_argument("pmid")
+    p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--abstract-only", action="store_true", help="skip PMC full text")
+    p.add_argument("--no-review", action="store_true", help="skip the fact-check call")
+    p.add_argument("--overwrite", action="store_true")
+    p.set_defaults(func=cmd_draft)
+
+    p = sub.add_parser("check", help="re-run deterministic checks after editing carousel.json")
+    p.add_argument("folder", type=Path)
+    p.set_defaults(func=cmd_check)
+
+    p = sub.add_parser("review", help="re-run the fact-check call")
+    p.add_argument("folder", type=Path)
+    p.set_defaults(func=cmd_review)
+
+    p = sub.add_parser("render", help="render PNG slides and caption.txt")
+    p.add_argument("folder", type=Path)
+    p.add_argument("--force", action="store_true", help="render despite check errors")
+    p.add_argument("--theme", default=None, help="override [brand] theme, e.g. clinical or noir")
+    p.set_defaults(func=cmd_render)
+
+    p = sub.add_parser("freeform", help="render a hand-written carousel spec (no paper, no evidence checks)")
+    p.add_argument("spec", type=Path, help="carousel.json in the FreeformCarousel shape")
+    p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--theme", default=None, help="override the spec's theme")
+    p.set_defaults(func=cmd_freeform)
+
+    p = sub.add_parser("yt-scan", help="YouTube demand report: numbers, comments, Gemini briefs, Claude analysis")
+    p.add_argument("query")
+    p.add_argument("--days", type=int, default=0)
+    p.add_argument("--videos", type=int, default=0)
+    p.add_argument("--summaries", type=int, default=None, help="videos Gemini watches (0 = skip Gemini)")
+    p.add_argument("--out", type=Path, default=None)
+    p.set_defaults(func=cmd_yt_scan)
+
+    p = sub.add_parser("yt-idea", help="turn an idea from a yt-scan report into a PubMed search or a freeform draft")
+    p.add_argument("folder", type=Path)
+    p.add_argument("number", type=int)
+    p.add_argument("--days", type=int, default=365, help="PubMed window for health ideas")
+    p.add_argument("--theme", default="noir")
+    p.add_argument("--no-render", action="store_true")
+    p.set_defaults(func=cmd_yt_idea)
+
+    p = sub.add_parser("imagine", help="generate an image with Gemini for a freeform slide figure")
+    p.add_argument("prompt")
+    p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--aspect", default="16:9", help="1:1, 3:4, 4:3, 16:9, 21:9 ...")
+    p.set_defaults(func=cmd_imagine)
+
+    p = sub.add_parser("sample", help="render the bundled fictional example")
+    p.add_argument("--theme", default=None)
+    p.set_defaults(func=cmd_sample)
+
+    args = parser.parse_args(argv)
+    cfg = load_config(args.config)
+    return args.func(args, cfg)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

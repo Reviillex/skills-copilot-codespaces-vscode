@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "carousel-pipeline"
+version = "0.1.0"
+description = "Turn a PubMed paper into a source-checked Indonesian Instagram carousel."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "anthropic>=1.8",
+  "pydantic>=2.7",
+  "jinja2>=3.1",
+  "playwright>=1.45",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+gemini = ["google-genai>=2.0"]
+
+[project.scripts]
+carousel = "carousel.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+carousel = ["prompts/*.md", "templates/*.j2", "templates/*.css", "templates/themes/*.css", "sample/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

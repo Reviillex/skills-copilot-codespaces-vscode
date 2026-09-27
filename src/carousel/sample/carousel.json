@@ -1,0 +1,69 @@
+{
+  "topic_tag": "Tidur & Aktivitas",
+  "evidence_label": "Meta-analisis 12 RCT, 1.480 peserta",
+  "slides": [
+    {
+      "role": "hook",
+      "headline": "Jalan kaki **30 menit** sehari bisa bantu tidur lebih nyenyak",
+      "body": "",
+      "big_number": "",
+      "evidence": [
+        {"quote": "Participants walked 30 minutes per day for 8 to 12 weeks or continued usual activity."},
+        {"quote": "Walking improved sleep quality compared with usual activity"}
+      ]
+    },
+    {
+      "role": "context",
+      "headline": "Apakah jalan kaki memengaruhi **kualitas tidur**?",
+      "body": "Peneliti menggabungkan 12 uji klinis dengan 1.480 orang dewasa berusia 30 sampai 65 tahun. Peserta berjalan kaki 30 menit per hari selama 8 sampai 12 minggu.",
+      "big_number": "",
+      "evidence": [
+        {"quote": "We pooled 12 randomized controlled trials including 1,480 adults aged 30 to 65 years."},
+        {"quote": "Participants walked 30 minutes per day for 8 to 12 weeks or continued usual activity."}
+      ]
+    },
+    {
+      "role": "number",
+      "headline": "lebih cepat **tertidur** pada kelompok jalan kaki",
+      "body": "Dibandingkan kelompok yang beraktivitas seperti biasa.",
+      "big_number": "9 menit",
+      "evidence": [
+        {"quote": "Time to fall asleep was 9 minutes shorter in walking groups."}
+      ]
+    },
+    {
+      "role": "finding",
+      "headline": "Skor kualitas tidur membaik **1,8 poin**",
+      "body": "Diukur dengan kuesioner PSQI: makin rendah skornya, makin baik tidurnya. Efeknya mirip pada pria dan wanita.",
+      "big_number": "",
+      "evidence": [
+        {"quote": "mean difference -1.8 PSQI points, 95% CI -2.4 to -1.2"},
+        {"quote": "where lower scores indicate better sleep"},
+        {"quote": "Effects were similar in men and women."}
+      ]
+    },
+    {
+      "role": "caveat",
+      "headline": "Efeknya **sedang**, dan buktinya masih terbatas",
+      "body": "- Hanya 2 dari 12 uji klinis berisiko bias rendah\n- Pemantauan paling lama 12 minggu\n- Sebagian besar studi dari Eropa dan Amerika Utara",
+      "big_number": "",
+      "evidence": [
+        {"quote": "only 2 trials were at low risk of bias"},
+        {"quote": "No trial followed participants for longer than 12 weeks."},
+        {"quote": "Eight of the 12 trials were conducted in Europe or North America"}
+      ]
+    },
+    {
+      "role": "takeaway",
+      "headline": "Mulai dari jalan kaki **30 menit** sehari",
+      "body": "- Lakukan rutin selama beberapa minggu\n- Anggap sebagai tambahan, bukan pengganti pengobatan gangguan tidur\n- Jika susah tidur terus berlanjut, konsultasikan ke dokter",
+      "big_number": "",
+      "evidence": [
+        {"quote": "Walking 30 minutes per day may modestly improve sleep quality in adults, but longer and higher-quality trials are needed."}
+      ]
+    }
+  ],
+  "caption": "Jalan kaki 30 menit sehari bisa membantu tidur lebih nyenyak. (CONTOH FIKTIF untuk demo, bukan studi nyata.)\n\nMeta-analisis 12 uji klinis dengan 1.480 orang dewasa menemukan kualitas tidur membaik dan waktu untuk tertidur lebih singkat pada kelompok yang rutin berjalan kaki.\n\nNamun, efeknya sedang, hanya 2 uji klinis yang berisiko bias rendah, dan belum ada pemantauan lebih dari 12 minggu. Jadi, anggap jalan kaki sebagai kebiasaan pendukung, bukan pengganti pengobatan gangguan tidur.\n\nAnda biasanya jalan kaki berapa menit sehari?",
+  "hashtags": ["edukasikesehatan", "tidurnyenyak", "jalankaki", "hidupsehat"],
+  "editor_notes": ["Contoh fiktif untuk demo pipeline; jangan dipublikasikan."]
+}

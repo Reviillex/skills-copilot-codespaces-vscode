@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<style>{{ theme_css | safe }}</style>
+<style>{{ base_css | safe }}</style>
+</head>
+<body>
+{% set total = slides | length %}
+{% for s in slides %}
+{% set n = loop.index %}
+<section class="slide slide--{{ s.kind }}">
+  {% if deck.sample %}<div class="sample">CONTOH FIKTIF</div>{% endif %}
+  <header class="top"><span class="tag">{{ deck.tag }}</span><span class="handle">{{ deck.handle }}</span></header>
+  <main class="content">
+  {% if s.kind == "cover" %}
+    {% if s.kicker %}<span class="kicker">{{ s.kicker }}</span>{% endif %}
+    <h1 class="display fit">{{ s.headline | rich }}</h1>
+    {% if s.lead %}<div class="lead fit">{{ s.lead | rich }}</div>{% endif %}
+  {% elif s.kind == "cta" %}
+    <h1 class="fit">{{ s.headline | rich }}</h1>
+    {% if s.question %}
+    <svg class="arrow" viewBox="0 0 36 72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M18 2v66M4 54l14 14 14-14"/></svg>
+    <p class="question fit">{{ s.question | rich }}</p>
+    {% endif %}
+    {% if s.note %}<p class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>{{ s.note }}</p>{% endif %}
+  {% elif s.kind == "reference" %}
+    <span class="eyebrow">{{ s.kicker }}</span>
+    <p class="lead fit" style="color: inherit">{{ s.lead }}</p>
+    <p class="note fit">{{ s.note }}</p>
+    <p class="author">{{ s.headline }}<br><span>{{ deck.handle }}</span></p>
+  {% else %}
+    {% if s.kicker %}<span class="eyebrow">{% if s.kind == "caveat" %}<span class="bang">!</span>{% endif %}{{ s.kicker }}</span>
+    {% else %}<span class="marker"></span>{% endif %}
+    {% if s.kind == "number" and s.big_number %}<div class="big fit">{{ s.big_number }}</div>{% endif %}
+    <h1 class="fit">{{ s.headline | rich }}</h1>
+    {% if s.lead %}<div class="lead fit">{{ s.lead | rich }}</div>{% endif %}
+    {% if s.body %}<div class="body fit">{{ s.body | rich }}</div>{% endif %}
+    {% if s.callout %}<p class="callout fit">{{ s.callout | rich }}</p>{% endif %}
+    {% if s.figure %}<figure class="figure">{{ s.figure }}</figure>{% endif %}
+  {% endif %}
+  </main>
+  <footer class="foot">
+    <span class="foot__left">{% if n == 1 %}Geser untuk lanjut &rarr;{% else %}{{ deck.foot }}{% endif %}</span>
+    <span class="progress"><span class="bar">{% for i in range(total) %}<i{% if i < n %} class="on"{% endif %}></i>{% endfor %}</span><span class="count">{{ n }}/{{ total }}</span></span>
+  </footer>
+</section>
+{% endfor %}
+</body>
+</html>

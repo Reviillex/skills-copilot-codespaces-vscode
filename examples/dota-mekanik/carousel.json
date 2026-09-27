@@ -1,0 +1,39 @@
+{
+  "series": "Kenapa Aku Suka #1",
+  "theme": "noir",
+  "footer": "Edisi Mekanik & Minus MMR",
+  "slides": [
+    {
+      "kind": "cover",
+      "kicker": "Edisi Mekanik & Minus MMR",
+      "headline": "Kenapa aku cinta mati sama **game pemberi trauma ini.**",
+      "lead": "Lebih menguras otak dan logika dari ruang kuliah mana pun."
+    },
+    {
+      "kind": "text",
+      "headline": "Mekanik Paling Absurd: \"Deny\"",
+      "body": "Bisa membunuh pasukan (creep) sendiri, biar musuh miskin EXP & Gold. Di game lain nggak ada mekanik seekstrem ini.",
+      "callout": "Ini murni psychological warfare."
+    },
+    {
+      "kind": "text",
+      "headline": "Catur 4 Dimensi: Perspektif Menentukan Nasib.",
+      "lead": "Pohon bukan cuma hiasan. Ia jadi tempat sembunyi sekaligus alat memecah vision musuh.",
+      "body": "Kalau lo menyerang dari dataran rendah ke arah bukit, serangan lo bisa meleset. Perspektif menentukan kemenangan.",
+      "figure": "highground.svg"
+    },
+    {
+      "kind": "text",
+      "headline": "Perang Bukan Lembar Skill Magic Aja, Ini Soal Visi dan Adaptasi.",
+      "lead": "Jarak pandang menyempit begitu malam tiba. Kamu dipaksa beradaptasi dengan ritme waktu.",
+      "body": "Item juga nggak turun dari langit. Semua dibeli di base, lalu diantar Kurir. Ketahuan musuh? Lek mati, rencanamu bocor.",
+      "figure": "courier.svg"
+    },
+    {
+      "kind": "cta",
+      "headline": "Dota 2 Adalah Simulasi Otak Paling Keras.",
+      "question": "Hero apa yang paling kamu suka? Tulis di kolom komentar.",
+      "note": "Simpan buat pengingat kalau ribuan jam lo nggak pernah sia-sia."
+    }
+  ]
+}

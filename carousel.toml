@@ -1,0 +1,56 @@
+# Carousel pipeline settings. Every key is optional; missing keys fall back to
+# the defaults in src/carousel/config.py.
+
+output_dir = "output"
+
+[brand]
+author = "dr. Hilmi Amirul Haq"
+handle = "@hilmiamirull"
+# Visual theme for health carousels: "clinical" (light) or "noir" (dark).
+# Colors, fonts and sizes live in src/carousel/templates/themes/<theme>.css.
+theme = "clinical"
+
+[writing]
+sapaan = "Anda"               # or "kamu"; used consistently in every slide
+min_slides = 6                # content slides, excluding the auto reference slide
+max_slides = 9
+max_headline_words = 12
+max_body_words = 40
+max_hashtags = 5
+freeform_sapaan = "kamu"      # voice for hobby/opinion carousels
+
+[model]
+name = "claude-opus-5"
+effort = "high"
+
+[pubmed]
+email = ""                    # NCBI asks for a contact email; set yours
+days = 7
+max_candidates = 20
+# Journal filter (PubMed [ta] abbreviations). Empty list = no journal filter.
+journals = [
+  "N Engl J Med", "Lancet", "JAMA", "BMJ", "Ann Intern Med",
+  "JAMA Intern Med", "JAMA Netw Open", "Nat Med", "PLoS Med", "BMC Med",
+  "Cochrane Database Syst Rev", "Lancet Public Health", "Br J Sports Med",
+  "Am J Clin Nutr", "Diabetes Care", "Circulation", "Eur Heart J",
+  "Sleep Med Rev", "JAMA Pediatr", "JAMA Psychiatry",
+]
+# Daily-life topics, matched against title/abstract.
+topics = [
+  "sleep", "physical activity", "exercise", "walking", "sedentary",
+  "diet", "nutrition", "coffee", "tea", "sugar-sweetened", "ultra-processed",
+  "screen time", "smoking", "vaping", "alcohol", "stress", "loneliness",
+  "body weight", "hydration", "sunlight",
+]
+
+[youtube]                     # needs YOUTUBE_API_KEY (YouTube Data API v3)
+region = "ID"
+language = "id"
+days = 30
+max_videos = 15
+comments_per_video = 100
+summaries = 3                 # videos Gemini watches per scan; video tokens dominate cost
+
+[gemini]                      # needs GEMINI_API_KEY; check ids with client.models.list()
+video_model = "gemini-3.5-flash"
+image_model = "gemini-3.1-flash-image"
