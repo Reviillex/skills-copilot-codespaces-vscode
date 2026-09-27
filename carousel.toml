@@ -5,13 +5,10 @@ output_dir = "output"
 
 [brand]
 author = "dr. Hilmi Amirul Haq"
-handle = "@akunanda"          # replace with your Instagram handle
-primary = "#0F4C5C"           # headings, badges
-accent = "#E36414"            # big numbers, highlights
-background = "#FBF8F3"
-text = "#1B1B1B"
-caveat_background = "#FFF4E0"
-font = "Plus Jakarta Sans"    # Google Font; falls back to sans-serif offline
+handle = "@hilmiamirull"
+# Visual theme for health carousels: "clinical" (light) or "noir" (dark).
+# Colors, fonts and sizes live in src/carousel/templates/themes/<theme>.css.
+theme = "clinical"
 
 [writing]
 sapaan = "Anda"               # or "kamu"; used consistently in every slide

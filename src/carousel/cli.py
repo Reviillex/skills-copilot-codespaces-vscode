@@ -1,4 +1,4 @@
-"""Command line: discover -> draft (+check +review) -> edit JSON by hand -> check -> render."""
+"""Command line: discover -> draft (+check +review) -> edit JSON by hand -> check -> render.\n\nfreeform renders hand-written carousels (no paper) with the same themes."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ import urllib.error
 from importlib import resources
 from pathlib import Path
 
-from .checks import check_carousel, has_errors
+from .checks import check_carousel, check_freeform, has_errors
 from .config import Config, load_config
 from .pubmed import DESIGN_RANK, Paper, fetch_paper, fetch_papers, search
-from .schema import Carousel, Review
+from .schema import Carousel, FreeformCarousel, Review
 
 
 def _load(folder: Path) -> tuple[Paper, Carousel]:
@@ -164,8 +164,21 @@ def cmd_render(args: argparse.Namespace, cfg: Config) -> int:
         print("\nRendering blocked by errors above. Fix carousel.json or pass --force.")
         return 1
     paper, carousel = _load(args.folder)
-    paths = render(carousel, paper, cfg, args.folder / "slides")
+    paths = render(carousel, paper, cfg, args.folder / "slides", theme=args.theme)
     print(f"\n{len(paths)} slides + caption.txt in {args.folder / 'slides'}")
+    return 0
+
+
+def cmd_freeform(args: argparse.Namespace, cfg: Config) -> int:
+    """Render a hand-written carousel (opinion or hobby series): style checks only, never blocking."""
+    from .render import render_freeform
+
+    spec = FreeformCarousel.model_validate_json(args.spec.read_text(encoding="utf-8"))
+    issues = check_freeform(spec, cfg.writing)
+    print("\n".join(str(i) for i in issues) or "No issues.")
+    out = args.out or cfg.output_dir / args.spec.parent.name
+    paths = render_freeform(spec, args.spec.parent, cfg, out, theme=args.theme)
+    print(f"\n{len(paths)} slides rendered to {out}")
     return 0
 
 
@@ -177,7 +190,7 @@ def cmd_sample(args: argparse.Namespace, cfg: Config) -> int:
     paper = Paper(**json.loads(sample.joinpath("paper.json").read_text(encoding="utf-8")))
     carousel = Carousel.model_validate_json(sample.joinpath("carousel.json").read_text(encoding="utf-8"))
     out = cfg.output_dir / "sample"
-    paths = render(carousel, paper, cfg, out, sample=True)
+    paths = render(carousel, paper, cfg, out, sample=True, theme=args.theme)
     print(f"{len(paths)} slides rendered to {out}")
     return 0
 
@@ -210,9 +223,17 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("render", help="render PNG slides and caption.txt")
     p.add_argument("folder", type=Path)
     p.add_argument("--force", action="store_true", help="render despite check errors")
+    p.add_argument("--theme", default=None, help="override [brand] theme, e.g. clinical or noir")
     p.set_defaults(func=cmd_render)
 
+    p = sub.add_parser("freeform", help="render a hand-written carousel spec (no paper, no evidence checks)")
+    p.add_argument("spec", type=Path, help="carousel.json in the FreeformCarousel shape")
+    p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--theme", default=None, help="override the spec's theme")
+    p.set_defaults(func=cmd_freeform)
+
     p = sub.add_parser("sample", help="render the bundled fictional example")
+    p.add_argument("--theme", default=None)
     p.set_defaults(func=cmd_sample)
 
     args = parser.parse_args(argv)

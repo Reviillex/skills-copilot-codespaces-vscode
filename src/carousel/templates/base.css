@@ -1,0 +1,132 @@
+/* Components. Reads only component tokens from the active theme; no raw
+   colors here, so a theme swap restyles every slide. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #777; }
+
+.slide {
+  width: 1080px; height: 1350px; position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: var(--space-safe) var(--space-safe) calc(var(--space-safe) - 16px);
+  background: var(--slide-bg); color: var(--slide-fg);
+  font-family: var(--font-text);
+}
+.slide + .slide { margin-top: 20px; }
+.slide--cover { background: var(--cover-bg); color: var(--cover-fg); }
+.slide--caveat { background: var(--caveat-bg); }
+.slide--reference, .slide--cta { background: var(--end-bg); color: var(--end-fg); }
+.slide--cover, .slide--reference, .slide--cta {
+  --label-fg: var(--cover-label-fg);
+  --foot-fg: var(--cover-foot-fg);
+  --foot-border: var(--cover-foot-border);
+  --progress-fill: var(--cover-progress-fill);
+  --progress-track: var(--cover-progress-track);
+}
+
+/* top row: series/topic tag left, handle right, identical on every slide */
+.top {
+  flex: none; display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  font-size: var(--label-size); font-weight: 700; letter-spacing: var(--label-tracking);
+  text-transform: uppercase; color: var(--label-fg);
+}
+.top .handle { text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+.content {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: var(--content-justify, flex-start);
+  gap: var(--space-gap); padding: 64px 0 32px;
+}
+.slide--cover .content { justify-content: center; }
+.slide--reference .content, .slide--cta .content {
+  justify-content: center; align-items: var(--end-align);
+  text-align: var(--end-text-align, left);
+}
+
+/* type */
+h1 {
+  font-family: var(--font-display); font-weight: var(--headline-weight);
+  font-size: var(--headline-size); line-height: var(--headline-leading);
+  letter-spacing: var(--headline-tracking);
+}
+h1.display {
+  font-size: var(--display-size); line-height: var(--display-leading);
+  font-weight: var(--display-weight); text-transform: var(--display-transform);
+}
+.lead { font-size: var(--lead-size); line-height: var(--lead-leading); color: var(--lead-fg); }
+.body { font-size: var(--body-size); line-height: var(--body-leading); font-weight: var(--body-weight); }
+.lead p + p, .body p + p { margin-top: 0.5em; }
+.body ul { list-style: none; display: flex; flex-direction: column; gap: 0.5em; }
+.body li { padding-left: 1.3em; position: relative; }
+.body li::before {
+  content: ""; position: absolute; left: 0; top: 0.5em;
+  width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--bullet);
+}
+.hl { color: var(--emphasis-fg); font-weight: inherit; }
+.body .hl, .lead .hl { font-weight: 700; }
+
+/* labels */
+.kicker {
+  align-self: flex-start; font-size: 26px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 14px 28px; border-radius: var(--radius-pill);
+  color: var(--kicker-fg); background: var(--kicker-bg); border: 2px solid var(--kicker-border);
+}
+.eyebrow {
+  display: flex; align-items: center; gap: 16px; font-size: 28px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--eyebrow-fg);
+}
+.slide--caveat .eyebrow { color: var(--emphasis-fg); }
+.bang {
+  width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center;
+  justify-content: center; background: var(--emphasis-fg); color: var(--on-emphasis-fg); font-size: 28px;
+}
+.marker { display: var(--marker-display); width: 8px; height: 56px; border-radius: 4px; background: var(--marker-color); }
+
+/* blocks */
+.big { font-family: var(--font-display); font-weight: 900; font-size: var(--number-size); line-height: 1; letter-spacing: -0.03em; color: var(--emphasis-fg); }
+.callout {
+  align-self: flex-start; font-size: 34px; font-weight: 600; line-height: 1.35;
+  padding: 22px 32px; border-radius: var(--radius-box);
+  color: var(--callout-fg); background: var(--callout-bg); border: 2px solid var(--callout-border);
+}
+/* fixed height: text shrinks to fit before the figure does, so labels stay legible */
+.figure { flex: none; height: var(--figure-height, 280px); display: flex; }
+.figure svg, .figure img { width: 100%; height: 100%; }
+.question { font-family: var(--font-text); font-weight: 700; font-size: 60px; line-height: 1.3; color: var(--question-fg); }
+.arrow { width: 36px; height: 72px; color: var(--question-fg); }
+.note {
+  display: flex; align-items: center; gap: 18px; font-size: 30px; line-height: 1.4; font-weight: 500;
+  padding: 24px 32px; border-radius: var(--radius-box); text-align: left;
+  color: var(--note-fg); background: var(--note-bg); border: 2px solid var(--note-border);
+}
+.note svg { flex: none; width: 34px; height: 34px; }
+.author { font-size: 36px; font-weight: 800; line-height: 1.35; }
+.author span { font-weight: 600; opacity: 0.85; }
+
+/* figure classes for inline SVG (see design/README.md) */
+.fig-line { stroke: var(--figure-line); fill: none; stroke-width: 4; }
+.fig-route { stroke: var(--figure-line); fill: none; stroke-width: 4; stroke-dasharray: 2 14; stroke-linecap: round; }
+.fig-danger { stroke: var(--emphasis-fg); fill: none; stroke-width: 4; stroke-dasharray: 2 12; stroke-linecap: round; }
+.fig-dot { fill: var(--figure-fg); }
+.fig-dot-signal { fill: var(--progress-fill); }
+.fig-dot-danger { fill: var(--emphasis-fg); }
+.fig-label { fill: var(--figure-label); font: 700 26px var(--font-text); letter-spacing: 0.08em; }
+.fig-label-signal { fill: var(--progress-fill); font: 700 26px var(--font-text); letter-spacing: 0.08em; }
+.fig-label-danger { fill: var(--emphasis-fg); font: 700 28px var(--font-text); }
+.fig-box-danger { fill: var(--callout-bg); stroke: var(--callout-border); stroke-width: 2; }
+
+/* footer: identical position on every slide */
+.foot {
+  flex: none; display: flex; justify-content: space-between; align-items: center; gap: 32px;
+  padding-top: 28px; border-top: 2px solid var(--foot-border);
+  font-size: 24px; color: var(--foot-fg);
+}
+.foot__left { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.progress { flex: none; display: flex; align-items: center; gap: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bar { display: flex; gap: 6px; }
+.bar i { display: block; width: 18px; height: 5px; border-radius: 3px; background: var(--progress-track); }
+.bar i.on { background: var(--progress-fill); }
+
+.sample {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  background: #C1121F; color: #fff; font: 800 22px var(--font-text);
+  padding: 6px 16px; border-radius: 8px; letter-spacing: 0.06em;
+}

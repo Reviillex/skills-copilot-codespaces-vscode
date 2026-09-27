@@ -22,8 +22,12 @@ src/carousel/
   llm.py               Claude draft + fact-check calls (structured output)
   schema.py            Pydantic output schemas
   checks.py            Deterministic checks (verbatim quotes, sourced numbers)
-  render.py            Jinja2 + Playwright -> 1080x1350 PNGs
-  prompts/, templates/, sample/
+  render.py            Jinja2 + Playwright -> 1080x1350 PNGs (health + freeform)
+  templates/           carousel.html.j2, base.css (components, tokens only),
+                       themes/<name>.css (primitive -> semantic -> component tokens)
+  prompts/, sample/
+design/                Design system doc + reference slides the noir theme came from
+examples/              Free-form carousel specs (JSON + SVG figures)
 tests/                 Offline pytest suite (fixtures are synthetic)
 carousel.toml          User settings (brand, writing limits, PubMed filters)
 CLAUDE.md              This file
@@ -60,7 +64,8 @@ hook — one `if [ -f <manifest> ]` block alongside the existing ones.
 ```
 Install: pip install -e '.[dev]' && playwright install chromium
 Test:    python3 -m pytest -q
-Demo:    carousel sample          (no API key needed)
+Demo:    carousel sample [--theme noir]          (no API key needed)
+         carousel freeform examples/dota-mekanik/carousel.json
 Lint:    (none yet)
 ```
 

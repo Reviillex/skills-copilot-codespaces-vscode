@@ -2,103 +2,48 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family={{ brand.font | replace(' ', '+') }}:wght@400;600;800&display=block" rel="stylesheet">
-<style>
-  :root {
-    --primary: {{ brand.primary }};
-    --accent: {{ brand.accent }};
-    --bg: {{ brand.background }};
-    --text: {{ brand.text }};
-    --caveat-bg: {{ brand.caveat_background }};
-    --font: "{{ brand.font }}", "Inter", "Helvetica Neue", Arial, sans-serif;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #777; font-family: var(--font); }
-  .slide {
-    width: 1080px; height: 1350px; padding: 88px 88px 72px;
-    display: flex; flex-direction: column; overflow: hidden;
-    background: var(--bg); color: var(--text); position: relative;
-  }
-  .slide + .slide { margin-top: 20px; }
-  .top, .bottom { display: flex; justify-content: space-between; align-items: center; flex: none; }
-  .top { font-size: 28px; font-weight: 600; }
-  .tag { color: var(--primary); letter-spacing: 0.02em; }
-  .count { opacity: 0.55; font-variant-numeric: tabular-nums; }
-  .bottom { font-size: 24px; opacity: 0.7; gap: 32px; padding-top: 32px; border-top: 2px solid currentColor; border-color: rgba(0,0,0,0.12); }
-  .cite { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-  .handle { font-weight: 600; flex: none; }
-  .content { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; min-height: 0; overflow: hidden; }
-  .label { font-size: 30px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary); display: flex; align-items: center; gap: 16px; }
-  h1 { font-size: 64px; line-height: 1.15; font-weight: 800; letter-spacing: -0.01em; }
-  .body { font-size: 40px; line-height: 1.42; }
-  .body p + p { margin-top: 18px; }
-  .body ul { list-style: none; display: flex; flex-direction: column; gap: 22px; }
-  .body li { padding-left: 52px; position: relative; }
-  .body li::before { content: ""; position: absolute; left: 0; top: 0.42em; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); }
-  .hl { color: var(--accent); font-weight: 800; }
-
-  /* cover */
-  .role-hook { background: var(--primary); color: #fff; }
-  .role-hook .tag { color: #fff; opacity: 0.85; }
-  .role-hook h1 { font-size: 92px; line-height: 1.08; }
-  .role-hook .bottom { border-color: rgba(255,255,255,0.25); }
-  .badge { align-self: flex-start; font-size: 30px; font-weight: 600; padding: 16px 28px; border-radius: 999px; background: rgba(255,255,255,0.14); }
-  .swipe { font-size: 30px; font-weight: 600; opacity: 0.85; align-self: flex-end; }
-
-  /* big number */
-  .big { font-size: 220px; line-height: 1; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; }
-
-  /* caveat */
-  .role-caveat { background: var(--caveat-bg); }
-  .role-caveat .label { color: var(--accent); }
-  .bang { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; }
-
-  /* reference slide */
-  .role-reference { background: var(--primary); color: #fff; }
-  .role-reference .tag, .role-reference .label { color: #fff; }
-  .role-reference .bottom { border-color: rgba(255,255,255,0.25); }
-  .ref { font-size: 34px; line-height: 1.45; }
-  .disclaimer { font-size: 30px; line-height: 1.45; padding: 28px 32px; border-radius: 20px; background: rgba(255,255,255,0.12); }
-  .author { font-size: 36px; font-weight: 800; }
-  .sample { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); background: #C1121F; color: #fff; font-size: 24px; font-weight: 800; padding: 6px 18px; border-radius: 8px; letter-spacing: 0.06em; }
-</style>
+<style>{{ theme_css | safe }}</style>
+<style>{{ base_css | safe }}</style>
 </head>
 <body>
+{% set total = slides | length %}
 {% for s in slides %}
-<section class="slide role-{{ s.role }}">
-  {% if sample %}<div class="sample">CONTOH FIKTIF</div>{% endif %}
-  <header class="top"><span class="tag">{{ carousel.topic_tag }}</span><span class="count">{{ loop.index }}/{{ total }}</span></header>
+{% set n = loop.index %}
+<section class="slide slide--{{ s.kind }}">
+  {% if deck.sample %}<div class="sample">CONTOH FIKTIF</div>{% endif %}
+  <header class="top"><span class="tag">{{ deck.tag }}</span><span class="handle">{{ deck.handle }}</span></header>
   <main class="content">
-  {% if s.role == "hook" %}
-    <span class="badge">{{ carousel.evidence_label }}</span>
+  {% if s.kind == "cover" %}
+    {% if s.kicker %}<span class="kicker">{{ s.kicker }}</span>{% endif %}
+    <h1 class="display fit">{{ s.headline | rich }}</h1>
+    {% if s.lead %}<div class="lead fit">{{ s.lead | rich }}</div>{% endif %}
+  {% elif s.kind == "cta" %}
     <h1 class="fit">{{ s.headline | rich }}</h1>
-    {% if s.body %}<div class="body fit">{{ s.body | rich }}</div>{% endif %}
-    <span class="swipe">Geser untuk selengkapnya &rarr;</span>
-  {% elif s.role == "number" %}
-    <div class="big fit">{{ s.big_number }}</div>
-    <h1 class="fit">{{ s.headline | rich }}</h1>
-    {% if s.body %}<div class="body fit">{{ s.body | rich }}</div>{% endif %}
-  {% elif s.role == "caveat" %}
-    <span class="label"><span class="bang">!</span>Catatan penting</span>
-    <h1 class="fit">{{ s.headline | rich }}</h1>
-    {% if s.body %}<div class="body fit">{{ s.body | rich }}</div>{% endif %}
-  {% elif s.role == "takeaway" %}
-    <span class="label">Apa artinya untuk {{ sapaan }}?</span>
-    <h1 class="fit">{{ s.headline | rich }}</h1>
-    {% if s.body %}<div class="body fit">{{ s.body | rich }}</div>{% endif %}
-  {% elif s.role == "reference" %}
-    <span class="label">Sumber</span>
-    <p class="ref fit">{{ paper.full_citation }}</p>
-    <p class="disclaimer fit">Konten ini untuk edukasi, bukan pengganti konsultasi dengan dokter. Hasil satu penelitian belum tentu berlaku untuk setiap orang.</p>
-    <p class="author">{{ brand.author }}<br><span style="font-weight:600;opacity:.85">{{ brand.handle }}</span></p>
+    {% if s.question %}
+    <svg class="arrow" viewBox="0 0 36 72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M18 2v66M4 54l14 14 14-14"/></svg>
+    <p class="question fit">{{ s.question | rich }}</p>
+    {% endif %}
+    {% if s.note %}<p class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>{{ s.note }}</p>{% endif %}
+  {% elif s.kind == "reference" %}
+    <span class="eyebrow">{{ s.kicker }}</span>
+    <p class="lead fit" style="color: inherit">{{ s.lead }}</p>
+    <p class="note fit">{{ s.note }}</p>
+    <p class="author">{{ s.headline }}<br><span>{{ deck.handle }}</span></p>
   {% else %}
+    {% if s.kicker %}<span class="eyebrow">{% if s.kind == "caveat" %}<span class="bang">!</span>{% endif %}{{ s.kicker }}</span>
+    {% else %}<span class="marker"></span>{% endif %}
+    {% if s.kind == "number" and s.big_number %}<div class="big fit">{{ s.big_number }}</div>{% endif %}
     <h1 class="fit">{{ s.headline | rich }}</h1>
+    {% if s.lead %}<div class="lead fit">{{ s.lead | rich }}</div>{% endif %}
     {% if s.body %}<div class="body fit">{{ s.body | rich }}</div>{% endif %}
+    {% if s.callout %}<p class="callout fit">{{ s.callout | rich }}</p>{% endif %}
+    {% if s.figure %}<figure class="figure">{{ s.figure }}</figure>{% endif %}
   {% endif %}
   </main>
-  <footer class="bottom"><span class="cite">{{ paper.short_citation }}</span><span class="handle">{{ brand.handle }}</span></footer>
+  <footer class="foot">
+    <span class="foot__left">{% if n == 1 %}Geser untuk lanjut &rarr;{% else %}{{ deck.foot }}{% endif %}</span>
+    <span class="progress"><span class="bar">{% for i in range(total) %}<i{% if i < n %} class="on"{% endif %}></i>{% endfor %}</span><span class="count">{{ n }}/{{ total }}</span></span>
+  </footer>
 </section>
 {% endfor %}
 </body>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 300" preserveAspectRatio="xMinYMid meet" role="img" aria-label="Serangan dari lowground ke highground punya peluang meleset">
+  <!-- terrain: low ground left, step up, high ground right -->
+  <path class="fig-line" d="M0 230 H380 V110 H920"/>
+  <!-- attack line from low to high ground -->
+  <path class="fig-danger" d="M120 230 L700 110"/>
+  <circle class="fig-dot" cx="120" cy="230" r="12"/>
+  <circle class="fig-dot-signal" cx="700" cy="110" r="14"/>
+  <!-- label sits above the attack line and left of the step, so nothing crosses it -->
+  <rect class="fig-box-danger" x="40" y="96" width="300" height="56" rx="10"/>
+  <text class="fig-label-danger" x="190" y="134" text-anchor="middle">Miss chance: 25%</text>
+  <text class="fig-label" x="0" y="282">LOWGROUND</text>
+  <text class="fig-label-signal" x="920" y="70" text-anchor="end">HIGHGROUND</text>
+</svg>

@@ -73,3 +73,40 @@ class Review(BaseModel):
     )
     overall: Literal["ready", "needs-edits", "reject"]
     summary: str
+
+
+# --------------------------------------------------------------------------- rendering
+
+SlideKind = Literal["cover", "text", "number", "caveat", "cta", "reference"]
+
+
+class RenderSlide(BaseModel):
+    """One slide as the template sees it. Health carousels are converted into
+    these; free-form carousels (opinion, hobby series) are written in this
+    shape directly. "reference" is produced by code only, for the source slide."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: SlideKind
+    kicker: str = ""
+    headline: str = ""
+    lead: str = ""
+    body: str = ""
+    big_number: str = ""
+    callout: str = ""
+    figure: str = ""
+    question: str = ""
+    note: str = ""
+
+
+class FreeformCarousel(BaseModel):
+    """A carousel written by hand (no paper, no evidence checks)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    series: str = ""
+    theme: str = "noir"
+    footer: str = ""
+    caption: str = ""
+    hashtags: list[str] = Field(default_factory=list)
+    slides: list[RenderSlide]

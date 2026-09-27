@@ -1,0 +1,112 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Inter:wght@400;500;600;700&display=block");
+
+/* Noir: dark editorial theme derived from the "Kenapa Aku Suka #1" Dota 2
+   carousel (design/reference/dota-mekanik-v1). Three layers: primitive ->
+   semantic -> component. Components (base.css) read only the component layer. */
+:root {
+  /* ---- primitive ------------------------------------------------------ */
+  --ink-950: #0F1114;
+  --ink-900: #15181C;
+  --ink-700: #2A2F36;
+  --gray-500: #8A9099;
+  --gray-300: #B9BEC6;
+  --gray-100: #ECEDEF;
+  --coral-500: #FF5A5F;
+  --coral-900: #3A1518;
+  --amber-500: #E8A33D;
+  --amber-900: #3A2A12;
+  --font-montserrat: "Montserrat", "Arial Black", sans-serif;
+  --font-inter: "Inter", "Helvetica Neue", Arial, sans-serif;
+
+  /* ---- semantic ------------------------------------------------------- */
+  --color-bg: var(--ink-950);
+  --color-fg: var(--gray-100);
+  --color-muted: var(--gray-300);
+  --color-subtle: var(--gray-500);
+  --color-line: var(--ink-700);
+  --color-emphasis: var(--coral-500);      /* stakes, danger, the word that matters */
+  --color-emphasis-soft: var(--coral-900);
+  --color-signal: var(--amber-500);        /* labels, navigation, calls to action */
+  --color-signal-soft: var(--amber-900);
+  --font-display: var(--font-montserrat);
+  --font-text: var(--font-inter);
+
+  /* ---- component ------------------------------------------------------ */
+  --slide-bg:
+    radial-gradient(ellipse 70% 45% at 25% 0%, rgba(70, 82, 96, 0.35), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 55% 100%, rgba(120, 40, 44, 0.22), transparent 70%),
+    var(--color-bg);
+  --slide-fg: var(--color-fg);
+  --cover-bg: var(--slide-bg);
+  --cover-fg: var(--color-fg);
+  --caveat-bg:
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(232, 163, 61, 0.16), transparent 70%),
+    var(--color-bg);
+  --end-bg:
+    radial-gradient(ellipse 70% 45% at 50% 100%, rgba(120, 40, 44, 0.30), transparent 70%),
+    var(--color-bg);
+  --end-fg: var(--color-fg);
+  --end-align: center;
+
+  --label-fg: var(--color-subtle);
+  --label-size: 24px;
+  --label-tracking: 0.12em;
+
+  --kicker-fg: var(--color-signal);
+  --kicker-bg: rgba(255, 255, 255, 0.04);
+  --kicker-border: rgba(255, 255, 255, 0.14);
+
+  --display-size: 88px;
+  --display-leading: 1.0;
+  --display-transform: uppercase;
+  --display-weight: 900;
+  --headline-size: 68px;
+  --headline-leading: 1.08;
+  --headline-weight: 800;
+  --headline-tracking: -0.01em;
+  --lead-size: 42px;
+  --lead-leading: 1.45;
+  --lead-fg: var(--color-muted);
+  --body-size: 50px;
+  --body-leading: 1.38;
+  --body-weight: 500;
+  --number-size: 220px;
+  --emphasis-fg: var(--color-emphasis);
+
+  --callout-fg: var(--color-emphasis);
+  --callout-bg: color-mix(in srgb, var(--color-emphasis-soft) 70%, transparent);
+  --callout-border: color-mix(in srgb, var(--color-emphasis) 45%, transparent);
+  --question-fg: var(--color-signal);
+  --note-fg: var(--color-muted);
+  --note-bg: rgba(255, 255, 255, 0.04);
+  --note-border: rgba(255, 255, 255, 0.14);
+  --bullet: var(--color-emphasis);
+
+  --progress-track: rgba(255, 255, 255, 0.14);
+  --progress-fill: var(--color-signal);
+  --foot-fg: var(--color-subtle);
+  --foot-border: transparent;
+
+  --figure-line: var(--color-subtle);
+  --figure-fg: var(--color-fg);
+  --figure-label: var(--color-muted);
+
+  --eyebrow-fg: var(--color-signal);
+  --marker-display: block;
+  --marker-color: var(--color-emphasis);
+
+  --cover-label-fg: var(--color-subtle);
+  --cover-foot-fg: var(--color-subtle);
+  --cover-foot-border: transparent;
+  --cover-progress-fill: var(--color-signal);
+  --cover-progress-track: rgba(255, 255, 255, 0.14);
+
+  --content-justify: flex-start;
+  --end-text-align: center;
+  --on-emphasis-fg: var(--ink-950);
+
+  --space-safe: 80px;
+  --space-gap: 40px;
+  --radius-box: 14px;
+  --radius-pill: 999px;
+}

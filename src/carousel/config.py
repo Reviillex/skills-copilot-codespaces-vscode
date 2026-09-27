@@ -14,12 +14,7 @@ DEFAULT_CONFIG_PATH = Path("carousel.toml")
 class BrandConfig:
     author: str = "dr. Nama Anda"
     handle: str = "@akunanda"
-    primary: str = "#0F4C5C"
-    accent: str = "#E36414"
-    background: str = "#FBF8F3"
-    text: str = "#1B1B1B"
-    caveat_background: str = "#FFF4E0"
-    font: str = "Plus Jakarta Sans"
+    theme: str = "clinical"  # templates/themes/<theme>.css holds colors, fonts, sizes
 
 
 @dataclass

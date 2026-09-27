@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-from carousel.checks import check_carousel, has_errors, number_values, quote_in_source, normalize
+from carousel.checks import check_carousel, check_freeform, has_errors, normalize, number_values, quote_in_source, voice_issues
 from carousel.config import WritingConfig
-from carousel.schema import Evidence
+from carousel.schema import Evidence, FreeformCarousel
 
 W = WritingConfig()
 
@@ -85,3 +85,32 @@ def test_length_limits_are_warnings(sample_carousel, sample_paper):
     sample_carousel.slides[1].body = " ".join(["kata"] * 60)
     issues = check_carousel(sample_carousel, sample_paper, W)
     assert any("body has 60 words" in m for m in messages(issues, "warning"))
+
+
+def test_voice_mixing_is_flagged():
+    issues = voice_issues([("slide 3", "serangan lo bisa meleset"), ("slide 4", "Kamu dipaksa beradaptasi"),
+                           ("slide 1", "kenapa aku suka")])
+    assert len(issues) == 1
+    assert "'lo' in slide 3" in issues[0].message and "'kamu' in slide 4" in issues[0].message
+
+
+def test_single_voice_passes_and_words_inside_other_words_are_ignored():
+    assert voice_issues([("s1", "Kamu bisa. Ilmu dan kelompok itu penting."), ("s2", "kamu lagi")]) == []
+
+
+def test_sapaan_mismatch_flagged_for_health(sample_carousel, sample_paper):
+    sample_carousel.slides[3].body = "Kalau kamu susah tidur, coba jalan kaki."
+    warnings = messages(check_carousel(sample_carousel, sample_paper, W), "warning")
+    assert any("uses 'kamu' but sapaan is 'Anda'" in m for m in warnings)
+
+
+def test_freeform_checks():
+    spec = FreeformCarousel(slides=[
+        {"kind": "text", "headline": " ".join(["kata"] * 15)},
+        {"kind": "text", "headline": "ok", "body": "lo dan kamu"},
+    ])
+    msgs = [i.message for i in check_freeform(spec, W)]
+    assert "first slide is not a cover" in msgs
+    assert "last slide is not a call to action" in msgs
+    assert any("headline has 15 words" in m for m in msgs)
+    assert any("mixed second-person pronouns" in m for m in msgs)

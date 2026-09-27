@@ -1,0 +1,102 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&display=block");
+
+/* Clinical: light theme for health-education carousels. Three layers:
+   primitive -> semantic -> component. Components (base.css) read only the
+   component layer. */
+:root {
+  /* ---- primitive ------------------------------------------------------ */
+  --teal-800: #0F4C5C;
+  --teal-700: #1A5E6E;
+  --orange-600: #E36414;
+  --cream-50: #FBF8F3;
+  --sand-100: #FFF4E0;
+  --ink-900: #1B1B1B;
+  --ink-600: #4A4A4A;
+  --white: #FFFFFF;
+  --font-jakarta: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+
+  /* ---- semantic ------------------------------------------------------- */
+  --color-bg: var(--cream-50);
+  --color-fg: var(--ink-900);
+  --color-muted: var(--ink-600);
+  --color-subtle: #7A7A7A;
+  --color-line: rgba(0, 0, 0, 0.12);
+  --color-brand: var(--teal-800);
+  --color-emphasis: var(--orange-600);
+  --color-emphasis-soft: #FBE3D3;
+  --color-signal: var(--teal-800);
+  --font-display: var(--font-jakarta);
+  --font-text: var(--font-jakarta);
+
+  /* ---- component ------------------------------------------------------ */
+  --slide-bg: var(--color-bg);
+  --slide-fg: var(--color-fg);
+  --cover-bg: var(--color-brand);
+  --cover-fg: var(--white);
+  --caveat-bg: var(--sand-100);
+  --end-bg: var(--color-brand);
+  --end-fg: var(--white);
+  --end-align: flex-start;
+
+  --label-fg: var(--color-brand);
+  --label-size: 26px;
+  --label-tracking: 0.06em;
+
+  --kicker-fg: var(--white);
+  --kicker-bg: rgba(255, 255, 255, 0.14);
+  --kicker-border: transparent;
+
+  --display-size: 92px;
+  --display-leading: 1.08;
+  --display-transform: none;
+  --display-weight: 800;
+  --headline-size: 64px;
+  --headline-leading: 1.15;
+  --headline-weight: 800;
+  --headline-tracking: -0.01em;
+  --lead-size: 38px;
+  --lead-leading: 1.42;
+  --lead-fg: var(--color-muted);
+  --body-size: 40px;
+  --body-leading: 1.42;
+  --body-weight: 400;
+  --number-size: 220px;
+  --emphasis-fg: var(--color-emphasis);
+
+  --callout-fg: var(--color-emphasis);
+  --callout-bg: var(--color-emphasis-soft);
+  --callout-border: transparent;
+  --question-fg: var(--white);
+  --note-fg: var(--white);
+  --note-bg: rgba(255, 255, 255, 0.12);
+  --note-border: transparent;
+  --bullet: var(--color-emphasis);
+
+  --progress-track: rgba(0, 0, 0, 0.12);
+  --progress-fill: var(--color-brand);
+  --foot-fg: var(--color-subtle);
+  --foot-border: var(--color-line);
+
+  --figure-line: var(--color-subtle);
+  --figure-fg: var(--color-fg);
+  --figure-label: var(--color-muted);
+
+  --eyebrow-fg: var(--color-brand);
+  --marker-display: none;
+  --marker-color: var(--color-emphasis);
+
+  --cover-label-fg: rgba(255, 255, 255, 0.85);
+  --cover-foot-fg: rgba(255, 255, 255, 0.75);
+  --cover-foot-border: rgba(255, 255, 255, 0.25);
+  --cover-progress-fill: var(--white);
+  --cover-progress-track: rgba(255, 255, 255, 0.25);
+
+  --content-justify: center;
+  --end-text-align: left;
+  --on-emphasis-fg: var(--white);
+
+  --space-safe: 88px;
+  --space-gap: 40px;
+  --radius-box: 20px;
+  --radius-pill: 999px;
+}

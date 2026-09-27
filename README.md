@@ -33,8 +33,8 @@ export ANTHROPIC_API_KEY=...   # API billing is separate from a Claude.ai subscr
 export NCBI_API_KEY=...        # optional; raises the PubMed rate limit
 ```
 
-Edit `carousel.toml`: your Instagram handle, brand colours, contact email for NCBI, topics and journals.
-For consistent typography, install [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) on your computer; rendering otherwise falls back to a system sans-serif when the web font cannot load.
+Edit `carousel.toml`: your Instagram handle, theme, contact email for NCBI, topics and journals.
+Themes load their fonts from Google Fonts. For offline rendering, install the theme's fonts on your computer ([Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) for `clinical`; [Montserrat](https://fonts.google.com/specimen/Montserrat) and [Inter](https://fonts.google.com/specimen/Inter) for `noir`); otherwise a system sans-serif is used.
 
 Try the template without an API key: `carousel sample` renders a clearly labelled fictional example to `output/sample/`.
 
@@ -61,6 +61,18 @@ Other commands: `carousel review <folder>` re-runs the fact-check after large ed
 | `review.md`, `review.json` | Fact-check verdict per slide, suggested fixes, omitted points |
 | `usage.json` | Tokens and estimated cost per call |
 | `slides/slide-NN.png`, `slides/caption.txt` | What you post |
+
+## Themes and free-form carousels
+
+Two themes ship: `clinical` (light, the default for health posts) and `noir` (dark editorial, derived from the "Kenapa Aku Suka" Dota 2 series). Switch per run with `carousel render <folder> --theme noir`, or set `[brand] theme` in `carousel.toml`.
+
+For posts without a paper (opinion, hobby series), write the slides as JSON and render them with the same themes:
+
+```bash
+carousel freeform examples/dota-mekanik/carousel.json   # -> output/dota-mekanik/
+```
+
+Free-form carousels skip the evidence checks but still get style warnings (length, mixed pronouns). Tokens, color rules, slide kinds, figure classes and a pre-posting checklist are in [design/README.md](design/README.md).
 
 ## Cost
 

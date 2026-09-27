@@ -25,7 +25,7 @@ carousel = "carousel.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-carousel = ["prompts/*.md", "templates/*.j2", "sample/*.json"]
+carousel = ["prompts/*.md", "templates/*.j2", "templates/*.css", "templates/themes/*.css", "sample/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

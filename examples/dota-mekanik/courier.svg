@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 200" preserveAspectRatio="xMinYMid meet" role="img" aria-label="Rute kurir dari base ke frontline">
+  <!-- route base -> frontline; the courier in the middle is the exposed point -->
+  <path class="fig-route" d="M24 110 H896"/>
+  <circle class="fig-dot" cx="24" cy="110" r="14"/>
+  <circle class="fig-dot-signal" cx="896" cy="110" r="14"/>
+  <circle class="fig-dot-danger" cx="520" cy="110" r="18"/>
+  <text class="fig-label-danger" x="520" y="66" text-anchor="middle">KURIR</text>
+  <text class="fig-label" x="0" y="170">BASE</text>
+  <text class="fig-label-signal" x="920" y="170" text-anchor="end">FRONTLINE</text>
+</svg>

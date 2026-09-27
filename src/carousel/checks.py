@@ -12,13 +12,16 @@ from decimal import Decimal, InvalidOperation
 
 from .config import WritingConfig
 from .pubmed import Paper
-from .schema import Carousel
+from .schema import Carousel, FreeformCarousel
 
 NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
 HIGHLIGHT_RE = re.compile(r"\*\*(.+?)\*\*")
 
 # Causal wording that an observational design cannot support.
 CAUSAL_WORDS = ["menyebabkan", "penyebab", "mencegah", "menyembuhkan", "membuktikan", "terbukti"]
+# Pronoun families: mixing families inside one carousel reads as two authors.
+SECOND_PERSON = {"kamu": "kamu", "anda": "Anda", "lo": "lo", "lu": "lo", "elo": "lo", "elu": "lo", "loe": "lo"}
+FIRST_PERSON = {"aku": "aku", "gue": "gue", "gua": "gue", "gw": "gue", "saya": "saya"}
 # Overclaiming wording that no single study supports.
 ABSOLUTE_WORDS = ["pasti", "selalu", "dijamin", "100% aman", "obat ajaib"]
 
@@ -93,6 +96,55 @@ def word_count(text: str) -> int:
 # --------------------------------------------------------------------------- checks
 
 
+def voice_issues(texts: list[tuple[str, str]], expected_second: str | None = None) -> list[Issue]:
+    """Warn when a carousel mixes pronoun families (kamu / lo / Anda; aku / gue / saya).
+
+    ``texts`` is [(where, text)]. With ``expected_second`` set, any other
+    second-person family is flagged even if it is the only one used.
+    """
+    issues: list[Issue] = []
+    for families, label in ((SECOND_PERSON, "second-person"), (FIRST_PERSON, "first-person")):
+        found: dict[str, list[str]] = {}
+        pattern = re.compile(r"\b(" + "|".join(families) + r")\b")
+        for where, text in texts:
+            for word in pattern.findall(normalize(text)):
+                found.setdefault(families[word], [])
+                if where not in found[families[word]]:
+                    found[families[word]].append(where)
+        expected = expected_second if label == "second-person" else None
+        if expected:
+            for family, wheres in found.items():
+                if family.lower() != expected.lower():
+                    issues.append(Issue("warning", ", ".join(wheres),
+                                        f"uses '{family}' but sapaan is '{expected}'"))
+        elif len(found) > 1:
+            detail = "; ".join(f"'{f}' in {', '.join(w)}" for f, w in found.items())
+            issues.append(Issue("warning", "voice", f"mixed {label} pronouns: {detail}"))
+    return issues
+
+
+def check_freeform(spec: FreeformCarousel, writing: WritingConfig) -> list[Issue]:
+    """Style checks for hand-written carousels. No evidence rules: these are opinion posts."""
+    issues: list[Issue] = []
+    slides = spec.slides
+    if slides and slides[0].kind != "cover":
+        issues.append(Issue("warning", "slide 1", "first slide is not a cover"))
+    if slides and slides[-1].kind != "cta":
+        issues.append(Issue("warning", f"slide {len(slides)}", "last slide is not a call to action"))
+    texts: list[tuple[str, str]] = []
+    for i, s in enumerate(slides, start=1):
+        where = f"slide {i}"
+        hw = word_count(s.headline)
+        tw = word_count(" ".join([s.lead, s.body, s.callout]))
+        if hw > writing.max_headline_words:
+            issues.append(Issue("warning", where, f"headline has {hw} words (max {writing.max_headline_words})"))
+        if tw > writing.max_body_words:
+            issues.append(Issue("warning", where, f"text has {tw} words (max {writing.max_body_words})"))
+        texts.append((where, " ".join([s.kicker, s.headline, s.lead, s.body, s.callout, s.question, s.note])))
+    issues += voice_issues(texts + [("caption", spec.caption)])
+    return issues
+
+
 def check_carousel(carousel: Carousel, paper: Paper, writing: WritingConfig) -> list[Issue]:
     issues: list[Issue] = []
     source = normalize(paper.source_text())
@@ -150,6 +202,9 @@ def check_carousel(carousel: Carousel, paper: Paper, writing: WritingConfig) -> 
         for w in ABSOLUTE_WORDS:
             if re.search(rf"\b{re.escape(w)}\b", text):
                 issues.append(Issue("warning", where, f"overclaiming word '{w}'"))
+
+    texts = [(f"slide {i}", f"{s.headline} {s.body}") for i, s in enumerate(slides, start=1)]
+    issues += voice_issues(texts + [("caption", carousel.caption)], expected_second=writing.sapaan)
 
     for tok in numbers_in(carousel.caption):
         if not number_values(tok) & source_values:
