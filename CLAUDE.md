@@ -4,10 +4,9 @@ Guidance for Claude Code working in this repository.
 
 ## Status
 
-This repository is currently empty — no application code, tests, or build
-tooling yet. The files here are the Claude Code configuration scaffold. When
-real code lands, update the sections below (or re-run `/init`) so this file
-describes the actual project rather than the scaffold.
+Python CLI (`carousel`) that turns one PubMed paper into a source-checked
+Indonesian Instagram carousel. See README.md for the workflow and the accuracy
+guards. Nothing is posted automatically; a doctor reviews every draft.
 
 ## Repository layout
 
@@ -17,6 +16,16 @@ describes the actual project rather than the scaffold.
   settings.local.json  Personal overrides (gitignored, never commit)
   hooks/
     session-start.sh   Dependency bootstrap, runs at session start
+src/carousel/
+  cli.py               Commands: discover, draft, check, review, render, sample
+  pubmed.py            NCBI E-utilities search/fetch + XML parsing
+  llm.py               Claude draft + fact-check calls (structured output)
+  schema.py            Pydantic output schemas
+  checks.py            Deterministic checks (verbatim quotes, sourced numbers)
+  render.py            Jinja2 + Playwright -> 1080x1350 PNGs
+  prompts/, templates/, sample/
+tests/                 Offline pytest suite (fixtures are synthetic)
+carousel.toml          User settings (brand, writing limits, PubMed filters)
 CLAUDE.md              This file
 ```
 
@@ -48,14 +57,17 @@ hook — one `if [ -f <manifest> ]` block alongside the existing ones.
 
 ## Commands
 
-No build, test, or lint commands exist yet. Record them here as they are
-added, so sessions do not have to rediscover them:
-
 ```
-Build:   (none yet)
-Test:    (none yet)
+Install: pip install -e '.[dev]' && playwright install chromium
+Test:    python3 -m pytest -q
+Demo:    carousel sample          (no API key needed)
 Lint:    (none yet)
 ```
+
+In Claude Code on the web, Chromium lives at `/opt/pw-browsers/chromium`; set
+`CAROUSEL_CHROMIUM=/opt/pw-browsers/chromium` so the render test runs instead of
+skipping. NCBI E-utilities is blocked by the web sandbox proxy, so PubMed calls
+can only be tested against the fixtures there.
 
 ## Conventions
 

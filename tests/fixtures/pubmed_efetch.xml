@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+<!-- Synthetic records in PubMed efetch XML shape; not real articles. -->
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="In-Process" Owner="NLM">
+      <PMID Version="1">11111111</PMID>
+      <Article PubModel="Electronic">
+        <Journal>
+          <Title>JAMA network open</Title>
+          <JournalIssue CitedMedium="Internet">
+            <PubDate><Year>2026</Year><Month>Sep</Month></PubDate>
+          </JournalIssue>
+          <ISOAbbreviation>JAMA Netw Open</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Coffee intake and <i>atrial fibrillation</i>: a prospective cohort study.</ArticleTitle>
+        <Abstract>
+          <AbstractText Label="IMPORTANCE">Coffee is widely consumed.</AbstractText>
+          <AbstractText Label="RESULTS">Among 10,512 participants, 2 to 3 cups per day was associated with a 12% lower risk (HR 0.88; 95% CI, 0.80-0.97).</AbstractText>
+        </Abstract>
+        <AuthorList>
+          <Author><LastName>Santoso</LastName><ForeName>Budi</ForeName></Author>
+          <Author><LastName>Lee</LastName><ForeName>Ann</ForeName></Author>
+        </AuthorList>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+        </PublicationTypeList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">11111111</ArticleId>
+        <ArticleId IdType="doi">10.1001/example.2026.1</ArticleId>
+        <ArticleId IdType="pmc">PMC9999999</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">22222222</PMID>
+      <Article PubModel="Print">
+        <Journal>
+          <Title>BMJ (Clinical research ed.)</Title>
+          <JournalIssue CitedMedium="Internet">
+            <PubDate><MedlineDate>2025 Dec-2026 Jan</MedlineDate></PubDate>
+          </JournalIssue>
+          <ISOAbbreviation>BMJ</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Exercise for depression: systematic review and network meta-analysis.</ArticleTitle>
+        <Abstract>
+          <AbstractText>Walking reduced depressive symptoms.</AbstractText>
+        </Abstract>
+        <AuthorList>
+          <Author><CollectiveName>Exercise Trialists Group</CollectiveName></Author>
+        </AuthorList>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+          <PublicationType UI="D000078182">Systematic Review</PublicationType>
+          <PublicationType UI="D017418">Meta-Analysis</PublicationType>
+        </PublicationTypeList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">22222222</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>

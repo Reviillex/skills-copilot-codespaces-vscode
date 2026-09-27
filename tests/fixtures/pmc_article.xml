@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<!-- Synthetic record in PMC JATS shape; not a real article. -->
+<pmc-articleset>
+  <article article-type="research-article">
+    <front>
+      <article-meta>
+        <permissions>
+          <license license-type="open-access"><license-p>This is an open access article distributed under the terms of the CC-BY License.</license-p></license>
+        </permissions>
+        <abstract><p>Abstract text that should not be duplicated.</p></abstract>
+      </article-meta>
+    </front>
+    <body>
+      <sec>
+        <title>Methods</title>
+        <p>We followed 10,512 adults for a median of 8 years.</p>
+      </sec>
+      <sec>
+        <title>Limitations</title>
+        <p>Coffee intake was <italic>self-reported</italic> once at baseline.</p>
+      </sec>
+    </body>
+    <back><ref-list><ref><mixed-citation>Reference that should be excluded.</mixed-citation></ref></ref-list></back>
+  </article>
+</pmc-articleset>

@@ -1,0 +1,14 @@
+{
+  "pmid": "00000000",
+  "title": "FICTIONAL EXAMPLE: Daily walking and sleep quality in adults: a meta-analysis of randomized controlled trials",
+  "abstract": "BACKGROUND: This is a fictional abstract written only to demonstrate the carousel pipeline; it does not describe a real study. Poor sleep quality is common among adults.\nMETHODS: We pooled 12 randomized controlled trials including 1,480 adults aged 30 to 65 years. Participants walked 30 minutes per day for 8 to 12 weeks or continued usual activity. The primary outcome was the Pittsburgh Sleep Quality Index (PSQI), where lower scores indicate better sleep.\nRESULTS: Walking improved sleep quality compared with usual activity (mean difference -1.8 PSQI points, 95% CI -2.4 to -1.2). Time to fall asleep was 9 minutes shorter in walking groups. Effects were similar in men and women. Eight of the 12 trials were conducted in Europe or North America, and only 2 trials were at low risk of bias. No trial followed participants for longer than 12 weeks.\nCONCLUSIONS: Walking 30 minutes per day may modestly improve sleep quality in adults, but longer and higher-quality trials are needed.",
+  "journal": "Contoh J",
+  "year": "2026",
+  "authors": ["Contoh"],
+  "doi": "",
+  "pmcid": "",
+  "pub_types": ["Meta-Analysis"],
+  "design": "meta-analysis",
+  "full_text": "",
+  "license": ""
+}
