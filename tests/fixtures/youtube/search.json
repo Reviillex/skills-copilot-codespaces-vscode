@@ -1,0 +1,5 @@
+{"items": [
+  {"id": {"kind": "youtube#video", "videoId": "vidA"}, "snippet": {"title": "A"}},
+  {"id": {"kind": "youtube#video", "videoId": "vidB"}, "snippet": {"title": "B"}},
+  {"id": {"kind": "youtube#channel", "channelId": "chan"}, "snippet": {"title": "not a video"}}
+]}

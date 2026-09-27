@@ -6,6 +6,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import sys
 import urllib.error
 from importlib import resources
@@ -66,6 +67,8 @@ def _review_markdown(review: Review, carousel: Carousel) -> str:
 def cmd_discover(args: argparse.Namespace, cfg: Config) -> int:
     if args.days:
         cfg.pubmed.days = args.days
+    if getattr(args, "query", ""):
+        cfg.pubmed.query = args.query
     try:
         pmids = search(cfg.pubmed)
         papers = sorted(fetch_papers(pmids, cfg.pubmed), key=lambda p: DESIGN_RANK.get(p.design, 99))
@@ -195,6 +198,130 @@ def cmd_sample(args: argparse.Namespace, cfg: Config) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- YouTube + Gemini
+
+
+def _slug(text: str) -> str:
+    return "-".join(re.findall(r"[a-z0-9]+", text.lower()))[:40] or "query"
+
+
+def cmd_yt_scan(args: argparse.Namespace, cfg: Config) -> int:
+    """YouTube numbers + comments, Gemini video briefs, Claude demand report."""
+    import anthropic
+
+    from . import gemini, youtube as yt
+    from .insights import analyze_demand, check_report, report_markdown
+    from .llm import DraftError, usage_line
+
+    y = cfg.youtube
+    y.days = args.days or y.days
+    y.max_videos = args.videos or y.max_videos
+    summaries = y.summaries if args.summaries is None else args.summaries
+    now = dt.datetime.now(dt.timezone.utc)
+    folder = args.out or cfg.output_dir / "yt" / f"{now:%Y-%m-%d}-{_slug(args.query)}"
+
+    try:
+        videos = yt.rank_by_momentum(yt.video_details(yt.search_video_ids(args.query, y, now)), now)
+        comments = [c for v in videos for c in yt.top_comments(v.id, y.comments_per_video)]
+    except (yt.YouTubeError, urllib.error.URLError) as e:
+        print(f"YouTube request failed: {getattr(e, 'reason', e)}")
+        return 1
+    if not videos:
+        print(f"No videos for '{args.query}' in the last {y.days} days.")
+        return 0
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "videos.json").write_text(yt.to_json(videos), encoding="utf-8")
+    (folder / "comments.json").write_text(yt.to_json(comments), encoding="utf-8")
+    print(f"{len(videos)} videos, {len(comments)} comments (author names dropped).")
+
+    briefs: dict[str, dict] = {}
+    if summaries > 0:
+        try:
+            gclient = gemini.client()
+            for v in videos[:summaries]:
+                try:
+                    briefs[v.id] = gemini.summarize_video(gclient, cfg.gemini.video_model, v.url).model_dump()
+                    print(f"Gemini watched: {v.title[:70]}")
+                except Exception as e:  # one failed video (private, too long, quota) must not stop the scan
+                    print(f"Gemini skipped {v.id}: {e}")
+        except gemini.GeminiError as e:
+            print(f"Gemini unavailable, continuing without video briefs: {e}")
+        (folder / "briefs.json").write_text(json.dumps(briefs, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    _warn_if_no_credentials()
+    try:
+        report, usage = analyze_demand(anthropic.Anthropic(), cfg, args.query, videos, comments, briefs, now)
+    except DraftError as e:
+        print(f"Stopped: {e}")
+        return 1
+    issues = check_report(report, comments, {v.id for v in videos})
+    (folder / "report.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    (folder / "report.md").write_text(report_markdown(args.query, report, issues, videos, now), encoding="utf-8")
+    _append_usage(folder, "demand", usage)
+
+    print(f"\n{report.summary}\n")
+    for i in issues:
+        print(i)
+    for n, idea in enumerate(report.ideas, start=1):
+        print(f"{n}. [{idea.track}] {idea.title}")
+    print(f"\nReport: {folder / 'report.md'} ({usage_line(usage)})\nNext: carousel yt-idea {folder} <number>")
+    return 0
+
+
+def cmd_yt_idea(args: argparse.Namespace, cfg: Config) -> int:
+    """Health idea -> PubMed discover with its query. Freeform idea -> Claude draft -> noir render."""
+    from .schema import DemandReport
+
+    report = DemandReport.model_validate_json((args.folder / "report.json").read_text(encoding="utf-8"))
+    if not 1 <= args.number <= len(report.ideas):
+        print(f"Idea number must be 1 to {len(report.ideas)}.")
+        return 1
+    idea = report.ideas[args.number - 1]
+
+    if idea.track == "health":
+        print(f"Health idea: {idea.title}\nSearching PubMed (last {args.days} days): {idea.pubmed_query}\n")
+        return cmd_discover(argparse.Namespace(days=args.days, query=idea.pubmed_query), cfg)
+
+    import anthropic
+
+    from .insights import draft_freeform
+    from .llm import DraftError, usage_line
+    from .render import render_freeform
+
+    _warn_if_no_credentials()
+    try:
+        draft, usage = draft_freeform(anthropic.Anthropic(), cfg, idea, report)
+    except DraftError as e:
+        print(f"Stopped: {e}")
+        return 1
+    folder = args.folder / f"idea-{args.number}"
+    folder.mkdir(parents=True, exist_ok=True)
+    spec = draft.to_carousel(theme=args.theme)
+    (folder / "carousel.json").write_text(spec.model_dump_json(indent=2), encoding="utf-8")
+    _append_usage(folder, "freeform-draft", usage)
+    print(f"Draft: {folder / 'carousel.json'} ({usage_line(usage)})")
+    print("\n".join(str(i) for i in check_freeform(spec, cfg.writing)) or "No issues.")
+    if not args.no_render:
+        paths = render_freeform(spec, folder, cfg, folder / "slides")
+        print(f"{len(paths)} slides in {folder / 'slides'}")
+    print(f"Edit carousel.json, then: carousel freeform {folder / 'carousel.json'}")
+    return 0
+
+
+def cmd_imagine(args: argparse.Namespace, cfg: Config) -> int:
+    """Gemini image for a freeform slide figure. Not for clinical or anatomical visuals."""
+    from . import gemini
+
+    try:
+        path = gemini.generate_image(gemini.client(), cfg.gemini.image_model, args.prompt, args.out, args.aspect)
+    except gemini.GeminiError as e:
+        print(f"Stopped: {e}")
+        return 1
+    print(f"Saved {path} (+ {path.with_suffix('.txt').name} with prompt and AI label reminder).")
+    print(f'Use it in a freeform slide: "figure": "{path.name}"')
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="carousel", description=__doc__)
     parser.add_argument("--config", type=Path, default=None, help="path to carousel.toml")
@@ -202,6 +329,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("discover", help="list recent candidate papers from PubMed")
     p.add_argument("--days", type=int, default=0)
+    p.add_argument("--query", default="", help="custom PubMed terms; replaces topics and journals")
     p.set_defaults(func=cmd_discover)
 
     p = sub.add_parser("draft", help="fetch a paper and draft, check and review a carousel")
@@ -231,6 +359,28 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=None)
     p.add_argument("--theme", default=None, help="override the spec's theme")
     p.set_defaults(func=cmd_freeform)
+
+    p = sub.add_parser("yt-scan", help="YouTube demand report: numbers, comments, Gemini briefs, Claude analysis")
+    p.add_argument("query")
+    p.add_argument("--days", type=int, default=0)
+    p.add_argument("--videos", type=int, default=0)
+    p.add_argument("--summaries", type=int, default=None, help="videos Gemini watches (0 = skip Gemini)")
+    p.add_argument("--out", type=Path, default=None)
+    p.set_defaults(func=cmd_yt_scan)
+
+    p = sub.add_parser("yt-idea", help="turn an idea from a yt-scan report into a PubMed search or a freeform draft")
+    p.add_argument("folder", type=Path)
+    p.add_argument("number", type=int)
+    p.add_argument("--days", type=int, default=365, help="PubMed window for health ideas")
+    p.add_argument("--theme", default="noir")
+    p.add_argument("--no-render", action="store_true")
+    p.set_defaults(func=cmd_yt_idea)
+
+    p = sub.add_parser("imagine", help="generate an image with Gemini for a freeform slide figure")
+    p.add_argument("prompt")
+    p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--aspect", default="16:9", help="1:1, 3:4, 4:3, 16:9, 21:9 ...")
+    p.set_defaults(func=cmd_imagine)
 
     p = sub.add_parser("sample", help="render the bundled fictional example")
     p.add_argument("--theme", default=None)

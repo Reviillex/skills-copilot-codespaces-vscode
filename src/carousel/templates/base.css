@@ -90,6 +90,7 @@ h1.display {
 /* fixed height: text shrinks to fit before the figure does, so labels stay legible */
 .figure { flex: none; height: var(--figure-height, 280px); display: flex; }
 .figure svg, .figure img { width: 100%; height: 100%; }
+.figure img { object-fit: cover; border-radius: var(--radius-box); }
 .question { font-family: var(--font-text); font-weight: 700; font-size: 60px; line-height: 1.3; color: var(--question-fg); }
 .arrow { width: 36px; height: 72px; color: var(--question-fg); }
 .note {

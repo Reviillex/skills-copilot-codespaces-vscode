@@ -106,6 +106,10 @@ def build_query(cfg: PubMedConfig) -> str:
         ' OR meta-analysis[ti] OR "systematic review"[ti] OR randomized[ti] OR randomised[ti])'
     )
     clauses = [design, "hasabstract", "english[la]"]
+    if cfg.query:
+        # Idea-driven search (e.g. from a YouTube demand report): the design filter
+        # still applies, the topic list and journal list do not.
+        return " AND ".join(clauses + [f"({cfg.query})"])
     if cfg.topics:
         clauses.append("(" + " OR ".join(f'"{t}"[tiab]' for t in cfg.topics) + ")")
     if cfg.journals:

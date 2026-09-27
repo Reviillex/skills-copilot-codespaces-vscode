@@ -17,12 +17,16 @@ guards. Nothing is posted automatically; a doctor reviews every draft.
   hooks/
     session-start.sh   Dependency bootstrap, runs at session start
 src/carousel/
-  cli.py               Commands: discover, draft, check, review, render, sample
+  cli.py               Commands: discover, draft, check, review, render, freeform,
+                       yt-scan, yt-idea, imagine, sample
   pubmed.py            NCBI E-utilities search/fetch + XML parsing
   llm.py               Claude draft + fact-check calls (structured output)
   schema.py            Pydantic output schemas
   checks.py            Deterministic checks (verbatim quotes, sourced numbers)
   render.py            Jinja2 + Playwright -> 1080x1350 PNGs (health + freeform)
+  youtube.py           YouTube Data API v3: search, stats, comments (no author names)
+  gemini.py            google-genai: YouTube video briefs, image generation (optional extra)
+  insights.py          Claude demand report + freeform drafts from YouTube data
   templates/           carousel.html.j2, base.css (components, tokens only),
                        themes/<name>.css (primitive -> semantic -> component tokens)
   prompts/, sample/
@@ -62,7 +66,7 @@ hook — one `if [ -f <manifest> ]` block alongside the existing ones.
 ## Commands
 
 ```
-Install: pip install -e '.[dev]' && playwright install chromium
+Install: pip install -e '.[dev,gemini]' && playwright install chromium
 Test:    python3 -m pytest -q
 Demo:    carousel sample [--theme noir]          (no API key needed)
          carousel freeform examples/dota-mekanik/carousel.json
@@ -71,8 +75,9 @@ Lint:    (none yet)
 
 In Claude Code on the web, Chromium lives at `/opt/pw-browsers/chromium`; set
 `CAROUSEL_CHROMIUM=/opt/pw-browsers/chromium` so the render test runs instead of
-skipping. NCBI E-utilities is blocked by the web sandbox proxy, so PubMed calls
-can only be tested against the fixtures there.
+skipping. NCBI E-utilities, the YouTube Data API and the Gemini API are blocked
+by the web sandbox proxy, so those calls can only be tested against fixtures and
+stub clients there.
 
 ## Conventions
 

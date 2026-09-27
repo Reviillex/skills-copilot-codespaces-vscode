@@ -17,6 +17,7 @@ max_slides = 9
 max_headline_words = 12
 max_body_words = 40
 max_hashtags = 5
+freeform_sapaan = "kamu"      # voice for hobby/opinion carousels
 
 [model]
 name = "claude-opus-5"
@@ -41,3 +42,15 @@ topics = [
   "screen time", "smoking", "vaping", "alcohol", "stress", "loneliness",
   "body weight", "hydration", "sunlight",
 ]
+
+[youtube]                     # needs YOUTUBE_API_KEY (YouTube Data API v3)
+region = "ID"
+language = "id"
+days = 30
+max_videos = 15
+comments_per_video = 100
+summaries = 3                 # videos Gemini watches per scan; video tokens dominate cost
+
+[gemini]                      # needs GEMINI_API_KEY; check ids with client.models.list()
+video_model = "gemini-3.5-flash"
+image_model = "gemini-3.1-flash-image"

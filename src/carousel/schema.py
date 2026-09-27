@@ -110,3 +110,81 @@ class FreeformCarousel(BaseModel):
     caption: str = ""
     hashtags: list[str] = Field(default_factory=list)
     slides: list[RenderSlide]
+
+
+# --------------------------------------------------------------------------- YouTube insights
+
+
+class CommentQuote(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    quote: str = Field(description="Comment text copied character-for-character from the COMMENTS data.")
+
+
+class DemandTheme(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    theme: str
+    why_it_matters: str
+    evidence: list[CommentQuote] = Field(description="2 to 4 verbatim comments showing this demand.")
+    video_ids: list[str]
+
+
+class ContentIdea(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    angle: str = Field(description="What this carousel adds that the existing videos do not.")
+    track: Literal["health", "freeform"] = Field(
+        description="health = needs a paper (PubMed pipeline); freeform = opinion/hobby, no medical claims."
+    )
+    pubmed_query: str = Field(description='English PubMed terms for health ideas, e.g. "intermittent fasting" AND weight; "" for freeform.')
+    outline: list[str] = Field(description="5 to 8 slide beats.")
+    based_on: list[str] = Field(description="Theme names this idea answers.")
+
+
+class DemandReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    summary: str
+    themes: list[DemandTheme]
+    audience_questions: list[str]
+    claims_to_verify: list[str] = Field(description="Factual claims from videos or comments that need a source before use.")
+    format_lessons: list[str] = Field(description="What high-momentum videos do in hook, length and structure.")
+    ideas: list[ContentIdea]
+    limitations: list[str]
+
+
+DraftKind = Literal["cover", "text", "number", "caveat", "cta"]
+
+
+class DraftSlide(BaseModel):
+    """RenderSlide without defaults, for structured output. figure is filled in by hand later."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: DraftKind
+    kicker: str
+    headline: str
+    lead: str
+    body: str
+    big_number: str
+    callout: str
+    question: str
+    note: str
+
+
+class FreeformDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    series: str
+    footer: str
+    caption: str
+    hashtags: list[str]
+    slides: list[DraftSlide]
+
+    def to_carousel(self, theme: str = "noir") -> FreeformCarousel:
+        return FreeformCarousel(
+            series=self.series, theme=theme, footer=self.footer, caption=self.caption,
+            hashtags=self.hashtags, slides=[RenderSlide(**s.model_dump()) for s in self.slides],
+        )

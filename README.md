@@ -74,6 +74,41 @@ carousel freeform examples/dota-mekanik/carousel.json   # -> output/dota-mekanik
 
 Free-form carousels skip the evidence checks but still get style warnings (length, mixed pronouns). Tokens, color rules, slide kinds, figure classes and a pre-posting checklist are in [design/README.md](design/README.md).
 
+## YouTube demand research (Claude + Gemini)
+
+Finds what Indonesian viewers watch and ask about, then feeds ideas into the two pipelines above.
+
+```
+yt-scan "query" ──► YouTube Data API: most-viewed recent videos, stats, top comments (author names dropped)
+                ──► Gemini: watches the top N videos by URL (summary, hook, structure, claims)
+                ──► Claude: demand report (themes with verbatim comment quotes, questions, claims to verify, ideas)
+yt-idea <folder> <n>
+   health idea   ──► carousel discover --query "<PubMed terms>" ──► draft ──► check ──► render
+   freeform idea ──► Claude drafts FreeformCarousel JSON ──► noir render
+imagine "prompt" ──► Gemini image for a freeform slide figure
+```
+
+```bash
+pip install -e '.[gemini]'
+export YOUTUBE_API_KEY=...   # Google Cloud console, YouTube Data API v3
+export GEMINI_API_KEY=...    # Google AI Studio
+carousel yt-scan "diet keto" --days 30 --summaries 3
+carousel yt-idea output/yt/<date>-diet-keto 2
+carousel imagine "minimal isometric Dota 2 style map, dark" --out examples/<topic>/map.png --aspect 21:9
+```
+
+Why two models: Claude cannot watch a video or generate an image; Gemini does both. Claude does the reading, checking and writing, so the existing guards stay in one place.
+
+Guards:
+- Momentum is views per day, not total views, so a new video is not buried by an old one. Comments per 1,000 views measures engagement.
+- Every quote in a demand theme must match a real comment verbatim; cited video ids must be in the sample (`report.md` lists failures).
+- Comments and video briefs are treated as untrusted data: the prompt tells Claude never to follow instructions inside them.
+- Commenter names never reach disk or a model.
+- Claims from videos or comments land in "claims to verify", never in a carousel. Health ideas go through PubMed and the evidence checks; freeform drafts are told to avoid medical claims.
+- `imagine` writes a `.txt` next to each image with the prompt and a reminder to use Instagram's AI label. Do not use it for clinical or anatomical visuals.
+
+Limits: only public videos; YouTube gives no search-volume data, so demand is inferred from views and comments of videos that already exist; commenters are a vocal minority. Search costs 100 of the default 10,000 daily YouTube quota units; Gemini video input is billed per second of video, so `--summaries` caps how many videos it watches.
+
 ## Cost
 
 Default model: Claude Opus 5 ($5 / $25 per million input / output tokens). A full-text paper costs roughly $0.30 to 0.60 for draft + review, about $3 to 5 a month at 8 to 9 carousels. `usage.json` records the real figure. The request opts into server-side refusal fallback (`fallbacks: "default"`), so a false-positive safety decline on a medical topic is retried on Anthropic's recommended fallback model instead of failing.

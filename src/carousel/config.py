@@ -25,6 +25,7 @@ class WritingConfig:
     max_headline_words: int = 12
     max_body_words: int = 40
     max_hashtags: int = 5
+    freeform_sapaan: str = "kamu"  # voice for hobby/opinion carousels drafted from YouTube ideas
 
 
 @dataclass
@@ -40,6 +41,23 @@ class PubMedConfig:
     max_candidates: int = 20
     journals: list[str] = field(default_factory=list)
     topics: list[str] = field(default_factory=list)
+    query: str = ""  # set by `discover --query`: replaces topics and journals
+
+
+@dataclass
+class YouTubeConfig:
+    region: str = "ID"
+    language: str = "id"
+    days: int = 30
+    max_videos: int = 15
+    comments_per_video: int = 100
+    summaries: int = 3  # top videos Gemini watches per scan (video tokens are the main cost)
+
+
+@dataclass
+class GeminiConfig:
+    video_model: str = "gemini-3.5-flash"
+    image_model: str = "gemini-3.1-flash-image"
 
 
 @dataclass
@@ -49,6 +67,8 @@ class Config:
     writing: WritingConfig = field(default_factory=WritingConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     pubmed: PubMedConfig = field(default_factory=PubMedConfig)
+    youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
+    gemini: GeminiConfig = field(default_factory=GeminiConfig)
 
 
 def _fill(cls: type, data: dict[str, Any]) -> Any:
@@ -71,4 +91,6 @@ def load_config(path: Path | None = None) -> Config:
         writing=_fill(WritingConfig, raw.get("writing", {})),
         model=_fill(ModelConfig, raw.get("model", {})),
         pubmed=_fill(PubMedConfig, raw.get("pubmed", {})),
+        youtube=_fill(YouTubeConfig, raw.get("youtube", {})),
+        gemini=_fill(GeminiConfig, raw.get("gemini", {})),
     )
